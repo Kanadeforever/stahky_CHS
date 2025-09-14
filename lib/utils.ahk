@@ -1,4 +1,6 @@
-
+; 踩坑说明：
+; 		要编译中文版的时候，一定要把 UTF-8 改成 UTF-8 with BOM
+; 		否则会报错并在报错信息里提示乱码，或者错误的报错信息
 MakeStahkyMenu( pMenu, searchPath, iPUM, pMenuParams, recursion_CurrentDepth := 0 )
 {
 	global APP_NAME
@@ -11,28 +13,28 @@ MakeStahkyMenu( pMenu, searchPath, iPUM, pMenuParams, recursion_CurrentDepth := 
 
 	if (ShowOpenCurrentFolder)
 	{
-		; If we have a folder and the show current folder option is enabled,
-		; Show an "open: ..." folder option first. For more info see:
+		; 如果是文件夹且启用了显示当前文件夹选项，
+		; 首先显示一个"打开: ..."文件夹选项。更多信息请参见：
 		; https://github.com/joedf/stahky/issues/20
 		if (SubStr(searchPath, 1-2) == "\*")
 		{
-			currentDirItem := { "name": "Open this folder..."
+			currentDirItem := { "name": "打开此文件夹..."
 				,"path": SubStr(searchPath, 1, 0-2)
 				,"icon": "shell32.dll:4" }
 			pMenu.Add(currentDirItem)
-			pMenu.Add() ; add separator
+			pMenu.Add() ; 添加分隔符
 		}
 	}
 
 	if (SortFoldersFirst)
 	{
-		; do folders first
+		; 先处理文件夹
 		Loop, %searchPath%, 2
 		{
 			MakeStahkyMenu_subroutine( pMenu, A_LoopFileFullPath, iPUM, pMenuParams, recursion_CurrentDepth )
 		}
 
-		; do files second
+		; 再处理文件
 		Loop, %searchPath%, 0
 		{
 			MakeStahkyMenu_subroutine( pMenu, A_LoopFileFullPath, iPUM, pMenuParams, recursion_CurrentDepth )
@@ -40,7 +42,7 @@ MakeStahkyMenu( pMenu, searchPath, iPUM, pMenuParams, recursion_CurrentDepth := 
 	}
 	else
 	{
-		; do normal order, alphabetically/natural order
+		; 按正常顺序，字母/自然顺序
 		Loop, %searchPath%, 1
 		{
 			MakeStahkyMenu_subroutine( pMenu, A_LoopFileFullPath, iPUM, pMenuParams, recursion_CurrentDepth )
@@ -57,62 +59,61 @@ MakeStahkyMenu_subroutine( pMenu, fPath, iPUM, pMenuParams, recursion_CurrentDep
 	global STAHKY_START_TIME
 	global STAHKY_MAX_RUN_TIME
 
-	; assume we get the full path in fPath
+	; 假设我们获取的是fPath中的完整路径
 
-	; check if the menu creation is taking too long, avoid very large folders!
+	; 检查菜单创建是否耗时过长，避免处理非常大的文件夹！
 	runtime:=(A_TickCount - STAHKY_START_TIME)
-	if (runtime > 2000) ; bug? doesn't work unless we have tooltip?
-		ToolTip %APP_NAME% is loading... %runtime%
+	if (runtime > 2000) ; 错误？除非有工具提示否则不起作用？
+		ToolTip %APP_NAME% 正在加载... %runtime%
 	if (runtime > STAHKY_MAX_RUN_TIME) {
 		ToolTip
 
 		MsgBox, 4112, ,
 		(Ltrim Join`s
-		Stahky has been running for too long! Please ensure to not include any folders that are too large.
-		Consider including a shortcut to large folders in your stahky folder instead.
-		`n`nLatest file:`n%fPath%`n`nExecution time: %runtime% ms`nThe program will now terminate.
+		Stahky运行时间过长！请确保不要包含任何过大的文件夹。
+		考虑在您的stahky文件夹中包含指向大型文件夹的快捷方式。
+		`n`n最新文件：`n%fPath%`n`n执行时间：%runtime% 毫秒`n程序将立即终止。
 		)
 		ExitApp
 	}
 
 	FileGetAttrib, fileAttrib, % fPath
-	if InStr(fileAttrib, "H") ; Skip any file that is H (Hidden)
-		return pMenu ; Skip this file and move on to the next one.
-
+	if InStr(fileAttrib, "H") ; 跳过任何H（隐藏）文件
+		return pMenu ; 跳过此文件，继续处理下一个
 	SplitPath,fPath,,,fExt,fNameNoExt
 
-	; support filenames like .gitignore, LICENSE
+	; 支持像.gitignore、LICENSE这样的文件名
 	if (!fNameNoExt)
 		fNameNoExt := "." . fExt
 
-	; support filenames with `&`, so they don't become ALT+letter shortcut and hide the `&` character
+	; 支持带有`&`的文件名，这样它们不会变成ALT+字母快捷键并隐藏`&`字符
 	fNameNoExt := StrReplace(fNameNoExt,"&","&&")
 
-	; automagically get a nice icon accordingly, if possible
+	; 自动获取合适的图标（如果可能）
 	OutIconChoice := getItemIcon(fPath)
 
-	; setup the menu item's metadata
+	; 设置菜单项的元数据
 	mItem := { "name": fNameNoExt
 		,"path": fPath
 		,"icon": OutIconChoice }
 
-	; handle any submenus
+	; 处理任何子菜单
 	if fExt in lnk
 	{
-		; display stahkys as submenus
+		; 将stahky文件显示为子菜单
 		if (OutTarget := isStahkyFile(fPath)) {
 
-			; couldnt get from the stahky file config, so assume the target folder using the lnk's args
+			; 无法从stahky文件配置中获取，因此使用lnk的参数假设目标文件夹
 			if !FileExist(OutTarget) {
 				FileGetShortcut,%fPath%,,,OutArgs
 				OutTarget := Trim(OutArgs,""""`t)
 			}
 
-			; create and attach the stahky submenu, with a cap on recursion depth
+			; 创建并附加stahky子菜单，并限制递归深度
 			if (recursion_CurrentDepth < STAHKY_MAX_DEPTH)
 			{
-				; recurse into sub-stahky-liciousnous
-				; Not using "%A_ThisFunc%", to support optional sorting from "MakeStahkyMenu" instead of "MakeStahkyMenu_subroutine"
+				; 递归进入子stahky菜单
+				; 不使用"%A_ThisFunc%"，以支持从"MakeStahkyMenu"而不是"MakeStahkyMenu_subroutine"进行可选排序
 				MakeStahkyMenu( mItem["submenu"] := iPUM.CreateMenu( pMenuParams )
 					,OutTarget . "\*"
 					,iPUM
@@ -120,16 +121,16 @@ MakeStahkyMenu_subroutine( pMenu, fPath, iPUM, pMenuParams, recursion_CurrentDep
 					,recursion_CurrentDepth+1  )
 			} else {
 				maxStahkyWarningMenu := (mItem["submenu"] := iPUM.CreateMenu( pMenuParams ))
-				maxStahkyWarningMenu.Add({ "name": "Overwhelmingly Stahky-licious! (Max = " . STAHKY_MAX_DEPTH . ")"
+				maxStahkyWarningMenu.Add({ "name": "Stahky菜单过多！(最大 = " . STAHKY_MAX_DEPTH . ")"
 					,"disabled": true
 					,"icon": "shell32.dll:77" })
 			}
 		}
 	}
-	else if (InStr(fileAttrib,"D")) ; display on-shortcut folders as submenus
+	else if (InStr(fileAttrib,"D")) ; 将非快捷方式的文件夹显示为子菜单
 	{
-		; recurse into folders
-		; Not using "%A_ThisFunc%", to support optional sorting from "MakeStahkyMenu" instead of "MakeStahkyMenu_subroutine"
+		; 递归进入文件夹
+		; 不使用"%A_ThisFunc%"，以支持从"MakeStahkyMenu"而不是"MakeStahkyMenu_subroutine"进行可选排序
 		MakeStahkyMenu( mItem["submenu"] := iPUM.CreateMenu( pMenuParams )
 					,fPath . "\*"
 					,iPUM
@@ -137,7 +138,7 @@ MakeStahkyMenu_subroutine( pMenu, fPath, iPUM, pMenuParams, recursion_CurrentDep
 					,recursion_CurrentDepth )
 	}
 
-	; push the menu item to the parent menu
+	; 将菜单项添加到父菜单
 	pMenu.add( mItem )
 
 	return pMenu
@@ -149,27 +150,27 @@ makeStahkyFile(iPath, configFile:="") {
 	global G_STAHKY_ARG
 	global G_STAHKY_ARG_CFG
 
-	; assume we have a folder and get it's name
+	; 假设我们有一个文件夹并获取其名称
 	SplitPath,iPath,outFolderName
-	; create the shortcut in the same folder as Stahky itself
+	; 在与Stahky相同的文件夹中创建快捷方式
 	LinkFile := A_ScriptDir . "\" . outFolderName . "." . STAHKY_EXT
 
-	; check for optional config file param
+	; 检查可选的配置文件参数
 	cfgParam := ""
 	if (StrLen(configFile) > 0 and isSettingsFile(configFile)) {
 		cfgFullPath := NormalizePath(configFile)
-		; basically: /config "my/config/file/path/here.ini"
+		; 基本格式: /config "我的/配置文件/路径/这里.ini"
 		cfgParam := G_STAHKY_ARG_CFG . " " . """" . cfgFullPath . """"
 	}
 
-	; Compiled vs script (using installed AHK) version shortcuts are different
+	; 编译版本与脚本版本（使用已安装的AHK）的快捷方式不同
 	if (A_IsCompiled) {
 		FileCreateShortcut, %A_ScriptFullPath%, %LinkFile%, %A_ScriptDir%, %G_STAHKY_ARG% "%iPath%" %cfgParam%
 	} else {
 		FileCreateShortcut, %A_AhkPath%, %LinkFile%, %A_ScriptDir%,"%A_ScriptFullPath%" %G_STAHKY_ARG% "%iPath%" %cfgParam%
 	}
 
-	MsgBox, 64, New Stahky created, A pinnable shortcut was created here: `n%LinkFile%
+	MsgBox, 64, 已创建新的Stahky, 已在此处创建可固定的快捷方式: `n%LinkFile%
 }
 
 isStahkyFile(fPath) {
@@ -184,21 +185,21 @@ isStahkyFile(fPath) {
 		for n, arg in args
 		{
 			if (arg == G_STAHKY_ARG) {
-				;MsgBox, 48, , STAHKY-LICIOUS!
+				;MsgBox, 48, , 这是一个Stahky文件!
 				/*
-				Running as script example:
+				以脚本方式运行示例:
 					"C:\Program Files\AutoHotkey\v1.1.37.02\AutoHotkeyU64.exe" 
 					"C:\Users\joedf\code\stahky\stahky.ahk"
 					/stahky "C:\Users\joedf\code\stahky\~MY-LI~1"
 					/config "C:\Users\joedf\code\stahky\~stahky3.ini"
 				
-				Running as compiled example:
+				以编译方式运行示例:
 					C:\Users\joedf\code\stahky\stahky.exe
 					/stahky "C:\Users\joedf\code\stahky\~my-links"
 					/config "C:\Users\joedf\code\stahky\stahky.ini"
 				*/
-				; okay to assume the path following the argument is wrapped in quotes
-				; since we wrap all argument paths in quotes now...
+				; 可以假设参数后面的路径是用引号包裹的
+				; 因为我们现在将所有参数路径都用引号包裹...
 				s1 := InStr(outArgs, " " . G_STAHKY_ARG . " """) + StrLen(G_STAHKY_ARG) + 3
 				s2 := InStr(outArgs, """", false, s1)
 				path := Trim(SubStr(outArgs,s1, s2-s1),"""")
@@ -216,7 +217,7 @@ isSettingsFile(fPath) {
 	if FileExist(fPath)
 	{
 		SplitPath, fPath , , , fileExtension
-		; check if we got an existing INI file
+		; 检查是否是现有的INI文件
 		if InStr(fileExtension, "ini")
 		{
 			IniRead, outSection, %fPath%, %APP_NAME%
@@ -229,19 +230,19 @@ isSettingsFile(fPath) {
 
 loadSettings(SCFile) {
 	global
-	; get taskbar colors
+	; 获取任务栏颜色
 	TaskbarColor := getTaskbarColor()
 
-	; calc default colors
+	; 计算默认颜色
 	TaskbarSColor := lightenColor(TaskbarColor)
 	TaskbarTColor := contrastBW(TaskbarSColor)
 
-	; load vals
+	; 加载值
 	IniRead, offsetX, %SCFile%,%APP_NAME%,offsetX,0
 	IniRead, offsetY, %SCFile%,%APP_NAME%,offsetY,0
 	IniRead, icoSize, %SCFile%,%APP_NAME%,iconSize,24
 	IniRead, STAHKY_MAX_RUN_TIME, %SCFile%,%APP_NAME%,STAHKY_MAX_RUN_TIME,3500
-	STAHKY_MAX_RUN_TIME := Max(1000,Min(STAHKY_MAX_RUN_TIME,10000)) ; minimum of 1s, maximum of 10s wait/run time
+	STAHKY_MAX_RUN_TIME := Max(1000,Min(STAHKY_MAX_RUN_TIME,10000)) ; 最小等待/运行时间1秒，最大10秒
 	IniRead, STAHKY_MAX_DEPTH, %SCFile%,%APP_NAME%,STAHKY_MAX_DEPTH,5
 	IniRead, SortFoldersFirst, %SCFile%,%APP_NAME%,SortFoldersFirst,0
 	IniRead, useDPIScaleRatio, %SCFile%,%APP_NAME%,useDPIScaleRatio,1
@@ -253,10 +254,10 @@ loadSettings(SCFile) {
 	IniRead, menuMarginY, %SCFile%,%APP_NAME%,menuMarginY,4
 	IniRead, bgColor, %SCFile%,%APP_NAME%,menuBGColor, % TaskbarColor ;0x101010
 	IniRead, sbgColor, %SCFile%,%APP_NAME%,menuSelectedBGColor, % TaskbarSColor ;0x272727
-	IniRead, stextColor, %SCFile%,%APP_NAME%,menuSelectedTextColor, % TaskbarTColor ; B/W based on a luma/contrast formula
+	IniRead, stextColor, %SCFile%,%APP_NAME%,menuSelectedTextColor, % TaskbarTColor ; 基于亮度/对比度公式的黑白颜色
 	IniRead, textColor, %SCFile%,%APP_NAME%,menuTextColor, % TaskbarTColor
 	IniRead, PUM_flags, %SCFile%,%APP_NAME%,PUM_flags,hleft
-	; font options
+	; 字体选项
 	IniRead, fontName, %SCFile%,%APP_NAME%,fontName,Segoe UI
 	IniRead, fontSize, %SCFile%,%APP_NAME%,fontSize,9
 	IniRead, fontWeight, %SCFile%,%APP_NAME%,fontWeight,400
@@ -267,7 +268,7 @@ loadSettings(SCFile) {
 
 saveSettings(SCFile) {
 	global
-	; save vals
+	; 保存值
 	IniWrite, % offsetX, %SCFile%,%APP_NAME%,offsetX
 	IniWrite, % offsetY, %SCFile%,%APP_NAME%,offsetY
 	IniWrite, % icoSize, %SCFile%,%APP_NAME%,iconSize
@@ -286,7 +287,7 @@ saveSettings(SCFile) {
 	IniWrite, % stextColor, %SCFile%,%APP_NAME%,menuSelectedTextColor
 	IniWrite, % textColor, %SCFile%,%APP_NAME%,menuTextColor
 	IniWrite, % PUM_flags, %SCFile%,%APP_NAME%,PUM_flags
-	; font options
+	; 字体选项
 	IniWrite, % fontName, %SCFile%,%APP_NAME%,fontName
 	IniWrite, % fontSize, %SCFile%,%APP_NAME%,fontSize
 	IniWrite, % fontWeight, %SCFile%,%APP_NAME%,fontWeight
@@ -301,8 +302,7 @@ lightenColor(cHex, L:=2.64) {
 	B := (L * (10+(cHex & 0xFF))) & 0xFF
 	return Format("0x{:X}", (R<<16 | G<<8 | B<<0) )
 }
-
-contrastBW(c) { ; based on https://gamedev.stackexchange.com/a/38561/48591
+contrastBW(c) { ; 基于 https://gamedev.stackexchange.com/a/38561/48591
 	R := 0.2126 * (c>>16 & 0xFF) / 0xFF
 	G := 0.7152 * (c>>8 & 0xFF) / 0xFF
 	B := 0.0722 * (c & 0xFF) / 0xFF
@@ -311,31 +311,30 @@ contrastBW(c) { ; based on https://gamedev.stackexchange.com/a/38561/48591
 }
 
 getTaskbarColor() {
-	; get task pos/size info
+	; 获取任务栏位置/大小信息
 	WinGetPos tx, ty, tw, th, ahk_class Shell_TrayWnd
 
-	; calc pixel position
+	; 计算像素位置
 	tPix_x := tx + tw - 2
 	tPix_y := ty + th - 2
 
-	; pick the color and return
+	; 获取颜色并返回
 	PixelGetColor, TaskbarColor, % tPix_x, % tPix_y, RGB
 	return TaskbarColor
 }
 
 GetMonitorMouseIsIn() {
-	; code from Maestr0
+	; 代码来自 Maestr0
 	; https://www.autohotkey.com/boards/viewtopic.php?p=235163#p235163
 
-	; get the mouse coordinates first
-	Coordmode, Mouse, Screen	; use Screen, so we can compare the coords with the sysget information`
+	; 首先获取鼠标坐标
+	Coordmode, Mouse, Screen	; 使用屏幕坐标系，以便我们可以将坐标与sysget信息进行比较
 	MouseGetPos, Mx, My
 
-	SysGet, MonitorCount, 80	; monitorcount, so we know how many monitors there are, and the number of loops we need to do
+	SysGet, MonitorCount, 80	; 显示器数量，这样我们就知道有多少个显示器以及需要循环的次数
 	Loop, %MonitorCount%
 	{
-		SysGet, mon%A_Index%, Monitor, %A_Index%	; "Monitor" will get the total desktop space of the monitor, including taskbars
-
+		SysGet, mon%A_Index%, Monitor, %A_Index%	; "Monitor"将获取显示器的整个桌面空间，包括任务栏
 		if ( Mx >= mon%A_Index%left ) && ( Mx < mon%A_Index%right ) && ( My >= mon%A_Index%top ) && ( My < mon%A_Index%bottom )
 		{
 			ActiveMon := A_Index
@@ -346,7 +345,7 @@ GetMonitorMouseIsIn() {
 }
 
 getOptimalMenuPos(mx, my) {
-	; based off of stacky's code, but is multi-monitor aware
+	; 基于stacky的代码，但支持多显示器
 	; https://github.com/joedf/stahky/issues/21#issuecomment-2722264863
 	hMonitor := GetMonitorMouseIsIn()
 	SysGet, rWorkArea, MonitorWorkArea, %hMonitor%
@@ -364,7 +363,7 @@ getOptimalMenuPos(mx, my) {
 		pos_y := rWorkAreaBottom - 1
 	}
 	
-	; from testing, these flags don't seem to be needed
+	; 经过测试，这些标志似乎不需要
 	; SysGet, menuDropAlign, % (SM_MENUDROPALIGNMENT := 40)
 	; flags := menuDropAlign | (TPM_LEFTBUTTON := 0)
 	
@@ -377,11 +376,11 @@ getItemIcon(fPath) {
 
 	OutIconChoice := ""
 
-	; support executable binaries
+	; 支持可执行二进制文件
 	if fExt in exe,dll
 		OutIconChoice := fPath  . ":0"
 
-	; support windows shortcut/link files *.lnk
+	; 支持Windows快捷方式/链接文件 *.lnk
 	if fExt in lnk
 	{
 		FileGetShortcut, %fPath%, OutTarget,,,, OutIcon, OutIconNum
@@ -391,15 +390,15 @@ getItemIcon(fPath) {
 		if (OutIcon && OutIconNum)
 			OutIconChoice := OutIcon  . ":" . (OutIconNum-1)
 		else {
-			; Support shortcuts to folders with no custom icon set (default)
+			; 支持指向没有自定义图标集的文件夹的快捷方式（默认）
 			FileGetAttrib,_attr,%OutTarget%
 			if (InStr(_attr,"D")) {
-				; display default icon instead of blank file icon
+				; 显示默认图标而不是空白文件图标
 				OutIconChoice := "imageres.dll:4"
 			}
 		}
 	}
-	; support windows internet shortcut files *.url
+	; 支持Windows互联网快捷方式文件 *.url
 	else if fExt in url
 	{
 		IniRead, OutIcon, %fPath%, InternetShortcut, IconFile
@@ -408,16 +407,16 @@ getItemIcon(fPath) {
 			OutIconChoice := OutIcon  . ":" . OutIconNum
 	}
 
-	; support folder icons
+	; 支持文件夹图标
 	if (InStr(fAttr,"D"))
 	{
 		OutIconChoice := "shell32.dll:4"
 
-		; Customized may contain a hidden system file called desktop.ini
+		; 自定义文件夹可能包含一个名为desktop.ini的隐藏系统文件
 		_dini := fPath . "\desktop.ini"
 		; https://msdn.microsoft.com/en-us/library/cc144102.aspx
 
-		; case 1
+		; 情况1
 		; [.ShellClassInfo]
 		; IconResource=C:\WINDOWS\System32\SHELL32.dll,130
 		IniRead,_ico,%_dini%,.ShellClassInfo,IconResource,0
@@ -425,7 +424,7 @@ getItemIcon(fPath) {
 			lastComma := InStr(_ico,",",0,0)
 			OutIconChoice := Substr(_ico,1,lastComma-1) . ":" . substr(_ico,lastComma+1)
 		} else {
-			; case 2
+			; 情况2
 			; [.ShellClassInfo]
 			; IconFile=C:\WINDOWS\System32\SHELL32.dll
 			; IconIndex=130
@@ -436,14 +435,14 @@ getItemIcon(fPath) {
 		}
 	}
 
-	; support associated filetypes
+	; 支持关联的文件类型
 	else if (StrLen(OutIconChoice) < 4)
 		OutIconChoice := getExtIcon(fExt)
 
 	return OutIconChoice
 }
 
-getExtIcon(Ext) { ; modified from AHK_User - https://www.autohotkey.com/boards/viewtopic.php?p=297834#p297834
+getExtIcon(Ext) { ; 修改自 AHK_User - https://www.autohotkey.com/boards/viewtopic.php?p=297834#p297834
 	I1 := I2:= ""
 	RegRead, from, HKEY_CLASSES_ROOT, .%Ext%
 	RegRead, DefaultIcon, HKEY_CLASSES_ROOT, %from%\DefaultIcon
@@ -452,13 +451,13 @@ getExtIcon(Ext) { ; modified from AHK_User - https://www.autohotkey.com/boards/v
 	StringReplace, DefaultIcon, DefaultIcon, `%ProgramFiles`%, %A_ProgramFiles%,all
 	StringReplace, DefaultIcon, DefaultIcon, `%windir`%, %A_WinDir%,all
 	StringSplit, I, DefaultIcon, `,
-	DefaultIcon := I1 ":" RegExReplace(I2, "[^\d-]+") ;clean index number, but support negatives
+	DefaultIcon := I1 ":" RegExReplace(I2, "[^\d-]+") ;清理索引号，但支持负数
 
 	if (StrLen(DefaultIcon) < 4) {
-		; default file icon, if all else fails
+		; 默认文件图标，如果其他方法都失败
 		DefaultIcon := "shell32.dll:0"
 
-		;windows default to the OpenCommand if available
+		; Windows默认使用OpenCommand（如果可用）
 		RegRead, OpenCommand, HKEY_CLASSES_ROOT, %from%\shell\open\command
 		if (OpenCommand) {
 			OpenCommand := StrSplit(OpenCommand,"""","""`t`n`r")[2]
@@ -469,7 +468,7 @@ getExtIcon(Ext) { ; modified from AHK_User - https://www.autohotkey.com/boards/v
 	return DefaultIcon
 }
 
-NormalizePath(path) { ; from AHK v1.1.37.02 documentation
+NormalizePath(path) { ; 来自 AHK v1.1.37.02 文档
 	cc := DllCall("GetFullPathName", "str", path, "uint", 0, "ptr", 0, "ptr", 0, "uint")
 	VarSetCapacity(buf, cc*2)
 	DllCall("GetFullPathName", "str", path, "uint", cc, "str", buf, "ptr", 0)
@@ -482,7 +481,7 @@ FirstRun_Trigger() {
 	global APP_VERSION
 	global APP_REVISION
 
-	; prevent program auto exiting if we are displaying this dialog
+	; 防止程序在显示此对话框时自动退出
 	G_FirstRun_Trigger := true
 
 	Gui, AboutDialog:New, +LastFound +AlwaysOnTop +ToolWindow
@@ -498,14 +497,15 @@ FirstRun_Trigger() {
 	Gui, Add, Text, x72 y2, %APP_NAME%
 	Gui, Font, s9 norm
 	Gui, Add, Text, x+4 yp+15, v%APP_VERSION%
-	Gui, Add, Text, x72 yp+18 R2, by joedf
-	Gui, Add, Text, , Revision date: %APP_REVISION%
-	Gui, Add, Text, R2, Released under the MIT License
-	Gui, Add, Link, R2, Special thanks to <a href="https://www.autohotkey.com/board/topic/73599-ahk-l-pum-owner-drawn-object-based-popup-menu">Deo for PUM.ahk</a>
-	Gui, Add, Text, , First time use?
+	Gui, Add, Text, x72 yp+18 R2, 由 joedf 开发
+	Gui, Add, Text, , 修订日期: %APP_REVISION%
+	Gui, Add, Text, R2, 基于 MIT 许可证发布
+	Gui, Add, Link, R2, 特别感谢 <a href="https://www.autohotkey.com/board/topic/73599-ahk-l-pum-owner-drawn-object-based-popup-menu">Deo 的 PUM.ahk</a>
+	Gui, Add, Text, , 第一次使用？
 	Gui, Add, Link, , <a href="https://github.com/joedf/stahky">https://github.com/joedf/stahky</a>
+	Gui, Add, Link, , 或者软件根目录的<a href=".\readme.md">README.md</a>文件
 	Gui, AboutDialog:Margin, , 10
-	Gui, Show, , About %APP_NAME%
+	Gui, Show, , 关于 %APP_NAME%
 	return
 
 	AboutDialogGuiEscape:
