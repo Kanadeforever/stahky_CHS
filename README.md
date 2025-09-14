@@ -1,48 +1,54 @@
-# ![*](res/app48.png) stahky
-A take on [stacky](https://github.com/pawelt/stacky) in AutoHotkey (AHK) for Windows 10 & 11.  
-  
-Lots of customization options, see below!  
-  
-Get the latest version [here](https://github.com/joedf/stahky/releases).
+# ![*](res/app48.png) stahky 简体中文翻译版
 
-## Usage
-- Drag a folder with shortcuts, programs and files onto Stahky
-  - A taskbar pinnable icon / shortcut will be created in the same folder as Stahky itself.
-  - You should edit the shortcut's icon before pinning it.
-  - Once pinned, you can delete the shortcut file.
-  - Note: you can set files as hidden if you don't want them to appear in the Stahky menu.
-  - Note: you can drag a folder along with a stahky ini config file to use separate settings for each shortcut.
-- Appearance, DPI, offsets, etc. settings
-  - Colors are determined automatically on the first run
-  - Edit stahky.ini for specific colors, offsets (x or y), use DPI for size and position calculation, ...
-  - The `SortFoldersFirst` option allows you to have folders appear first at the top of each menu accordingly.
-  - Use `PUM_flags` to use [PUM.ahk's flag options](res/docs/PUM_documentation.pdf), such as `hleft` for horizontally left-aligned, `hcenter` for horizontally centered, or `noanim` for no fade-in animation. You can use multiple flags in the ini config file like so `PUM_flags=hleft noanim`
-  - Use `ShowAtMousePosition=1` in the ini config file to have the menu show up at the current mouse postion regardless where the taskbar is. However if this mode is used, `PUM_flags` values are ignored.
-  - The font can customized with the following ini config file options:
-      - `fontName` (default is `Segoe UI`)
-      - `fontSize` (default is `9`)
-      - `fontWeight` (default is `400`)
-      - `fontItalic` (default is `0` for false)
-      - `fontStrike` (default is `0` for false)
-      - `fontUnderline` (default is `0` for false)
-- Submenus
-  - You can use a normal folder and customize it's icon (in properties)
-    - Use a shortcut to a folder, if you want to be able to open it instead of a having submenu
-  - You can have stahky shortcuts within your folder for custom submenus. Stahky-licious!
-    - Stahkys that have circular references will be capped by the recursion depth setting `STAHKY_MAX_DEPTH` (default is 5).
-- Opening a folder in a Stahky menu
-  - Use `ShowOpenCurrentFolder=1` in the ini config file to display a "Open this folder..." option on all folders.
-  - Press <kbd>WheelButton</kbd> / <kbd>MButton</kbd> on
-    - a stahky to open its target folder for easy editing.
-    - any item to open its parent folder.
-    - Set `exitAfterFolderOpen=0` in the ini config file to keep Stahky on-screen after opening a folder
-- Intended to run as a compiled binary (best experience), but the script can be executed directly.
-- There is `/config` argument that can be used to specify a ini config file to use at runtime, e.g. `Stahky.exe /stahky "C:/my/folder" /config "C:/my/stahky/config/file.ini"`
-- Press <kbd>Shift</kbd>+<kbd>Win</kbd>+<kbd>a</kbd> or Right-click (<kbd>RButton</kbd>) any item in a stacky to show the About/First-time-use dialog to easily check the version and other information.
-- If Stahky takes too long to load, it will warn you of including folders that are too large.
-  - this time limit `STAHKY_MAX_RUN_TIME` can be changed but has a minimum of 1000 ms and maximum of 10 s of wait time (default is 3500 ms).
+本项目对stahky的贡献只有中文翻译，若上游有更新将尽快同步。
+再次感谢[joedf](https://github.com/joedf)的贡献！
 
-## Screenshots
+-----------------------------------------------------------------------------
+
+基于 AutoHotkey (AHK) 的 [stacky](https://github.com/pawelt/stacky) 实现，适用于 Windows 10 和 11。
+  
+提供大量自定义选项，详见下文！
+
+获取最新版本请访问[此处](https://github.com/joedf/stahky/releases)。
+
+## 使用方法
+- 将包含快捷方式、程序和文件的文件夹拖放到 Stahky 上
+  - 一个可固定到任务栏的图标 / 快捷方式将在 Stahky 所在目录创建。
+  - 在固定之前，你应该编辑该快捷方式的图标。
+  - 一旦固定，你可以删除该快捷方式文件。
+  - 注意：如果你不希望某些文件出现在 Stahky 菜单中，可以将它们设置为隐藏。
+  - 注意：你可以拖放一个文件夹以及一个 stahky ini 配置文件，以便为每个快捷方式使用单独的设置。
+- 外观、DPI、偏移量等设置
+  - 颜色在首次运行时自动确定
+  - 编辑 stahky.ini 以指定特定颜色、偏移量（x 或 y）、使用 DPI 进行大小和位置计算等...
+  - `SortFoldersFirst` 选项允许你在每个菜单中将文件夹优先显示在顶部。
+  - 使用 `PUM_flags` 来使用 [PUM.ahk 的标志选项](res/docs/PUM_documentation.pdf)，例如 `hleft` 表示水平左对齐，`hcenter` 表示水平居中，或 `noanim` 表示无淡入动画。你可以在 ini 配置文件中使用多个标志，例如 `PUM_flags=hleft noanim`
+  - 在 ini 配置文件中使用 `ShowAtMousePosition=1` 可以让菜单在当前鼠标位置显示，无论任务栏在哪里。但是，如果使用此模式，`PUM_flags` 的值将被忽略。
+  - 字体可以通过以下 ini 配置文件选项进行自定义：
+      - `fontName` (默认为 `Segoe UI`)
+      - `fontSize` (默认为 `9`)
+      - `fontWeight` (默认为 `400`)
+      - `fontItalic` (默认为 `0`，表示否)
+      - `fontStrike` (默认为 `0`，表示否)
+      - `fontUnderline` (默认为 `0`，表示否)
+- 子菜单
+  - 你可以使用一个普通文件夹并自定义其图标（在属性中）
+    - 如果你希望打开文件夹而不是拥有子菜单，可以使用指向文件夹的快捷方式。
+  - 你可以在文件夹内放置 stahky 快捷方式以创建自定义子菜单。非常 Stahky！
+    - 具有循环引用的 Stahky 将被递归深度设置 `STAHKY_MAX_DEPTH` 限制（默认为 5）。
+- 在 Stahky 菜单中打开文件夹
+  - 在 ini 配置文件中使用 `ShowOpenCurrentFolder=1` 可以在所有文件夹上显示“打开此文件夹...”选项。
+  - 按下 <kbd>鼠标中键</kbd> / <kbd>MButton</kbd> 可以
+    - 在 stahky 上打开其目标文件夹以便轻松编辑。
+    - 在任何项目上打开其父文件夹。
+    - 在 ini 配置文件中设置 `exitAfterFolderOpen=0` 可以在打开文件夹后保持 Stahky 显示在屏幕上。
+- 设计为以编译后的二进制文件运行（最佳体验），但也可以直接执行脚本。
+- 可以使用 `/config` 参数在运行时指定要使用的 ini 配置文件，例如 `Stahky.exe /stahky "C:/my/folder" /config "C:/my/stahky/config/file.ini"`
+- 按下 <kbd>Shift</kbd>+<kbd>Win</kbd>+<kbd>a</kbd> 或在任何 stacky 项目上右键单击 (<kbd>RButton</kbd>) 可以显示关于/首次使用对话框，以便轻松检查版本和其他信息。
+- 如果 Stahky 加载时间过长，它会警告你包含了过大的文件夹。
+  - 这个时间限制 `STAHKY_MAX_RUN_TIME` 可以更改，但最小等待时间为 1000 毫秒，最大为 10 秒（默认为 3500 毫秒）。
+
+## 截图
 ![screenshot1](res/screenshots/s1.png)
 ![about_dialog](res/screenshots/s3.png)
 ![screenshot2](res/screenshots/s2.png)
