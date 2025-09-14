@@ -1,6 +1,8 @@
 # ![*](res/app48.png) stahky 简体中文翻译版
 
-本项目对stahky的贡献只有中文翻译，若上游有更新将尽快同步。
+本分支当前对 [stahky](https://github.com/joedf/stahky) 的贡献只有中文翻译，错误修复暂时仅处理本分支产生的新错误。
+
+若主线程有更新将会尽快同步。
 
 再次感谢[joedf](https://github.com/joedf)的贡献！
 
