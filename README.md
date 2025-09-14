@@ -23,7 +23,7 @@
   - 颜色在首次运行时自动确定
   - 编辑 stahky.ini 以指定特定颜色、偏移量（x 或 y）、使用 DPI 进行大小和位置计算等...
   - `SortFoldersFirst` 选项允许你在每个菜单中将文件夹优先显示在顶部。
-  - 使用 `PUM_flags` 来使用 [PUM.ahk 的标志选项](res/docs/PUM_documentation.pdf)，例如 `hleft` 表示水平左对齐，`hcenter` 表示水平居中，或 `noanim` 表示无淡入动画。你可以在 ini 配置文件中使用多个标志，例如 `PUM_flags=hleft noanim`
+  - 使用 `PUM_flags` 来使用 [PUM.ahk 的标志选项](res/docs/PUM_documentation.pdf)【参考用的中文版在这里](res/docs/PUM_documentation_CN.pdf)】，例如 `hleft` 表示水平左对齐，`hcenter` 表示水平居中，或 `noanim` 表示无淡入动画。你可以在 ini 配置文件中使用多个标志，例如 `PUM_flags=hleft noanim`
   - 在 ini 配置文件中使用 `ShowAtMousePosition=1` 可以让菜单在当前鼠标位置显示，无论任务栏在哪里。但是，如果使用此模式，`PUM_flags` 的值将被忽略。
   - 字体可以通过以下 ini 配置文件选项进行自定义：
       - `fontName` (默认为 `Segoe UI`)
